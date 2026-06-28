@@ -1,0 +1,3 @@
+__pycache__/
+.streamlit/secrets.toml
+7vengers_state.json
