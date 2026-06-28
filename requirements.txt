@@ -1,5 +1,5 @@
 streamlit
-groq==0.4.2
+groq
 tenacity==8.2.3
 duckduckgo-search==5.0.0
 beautifulsoup4==4.12.3
