@@ -1,4 +1,4 @@
-streamlit==1.32.0
+streamlit
 groq==0.4.2
 tenacity==8.2.3
 duckduckgo-search==5.0.0
