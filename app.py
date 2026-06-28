@@ -107,10 +107,11 @@ if st.session_state.is_running:
         next_agent = "The Chaos Hacker"
         
     elif last_agent == "The Chaos Hacker":
-        if "[REJECTED]" in last_content:
-            next_agent = "The Architect" # 🔄 LOOP BACK! Architect must fix it.
+        # GUILTY UNTIL PROVEN INNOCENT LOGIC
+        if "[APPROVED]" in last_content:
+            next_agent = "The Quant" # Move forward only if explicitly approved
         else:
-            next_agent = "The Quant"
+            next_agent = "The Architect" # 🔄 LOOP BACK! Force Architect to answer the Hacker's attack.
             
     elif last_agent == "The Quant":
         next_agent = "The Growth Hacker"
@@ -119,11 +120,11 @@ if st.session_state.is_running:
         next_agent = "The Validator"
         
     elif last_agent == "The Validator":
-        if "[REJECTED]" in last_content:
-            next_agent = "The Mastermind" # 🔄 LOOP BACK to start for a new strategy!
-        else:
+        if "[APPROVED]" in last_content:
             next_agent = "The Mastermind" # Proceed to Final Summary
-            st.session_state.is_final_round = True # Flag for final summary
+            st.session_state.is_final_round = True
+        else:
+            next_agent = "The Architect" # 🔄 LOOP BACK! If the math or logic is fake, Architect must rebuild.
 
     # --- EXECUTION ---
     if next_agent == "END":
