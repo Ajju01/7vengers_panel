@@ -30,14 +30,11 @@ def clear_state():
         os.remove(STATE_FILE)
 
 # --- Updated Groq API Engine with Key Rotation ---
-def call_agent(api_keys: list, agent_name: str, system_prompt: str, chat_history: list, model="llama-3.3-70b-versatile"):
+def call_agent(api_keys: list, agent_name: str, system_prompt: str, chat_history: list, model="llama3-70b-8192"):
     """
     Calls Groq API using a randomly selected API key to prevent rate limits.
+    Picks a fresh random key on every retry too, so a rate-limited key isn't reused mid-wait.
     """
-    # 🔄 API Key Rotation: Pick a random key for this turn
-    selected_key = random.choice(api_keys)
-    client = Groq(api_key=selected_key)
-
     # Prepare messages: System prompt + full context of the discussion
     api_messages = [{"role": "system", "content": system_prompt}]
     
@@ -49,6 +46,9 @@ def call_agent(api_keys: list, agent_name: str, system_prompt: str, chat_history
 
     max_retries = 4
     for attempt in range(max_retries):
+        # 🔄 API Key Rotation: Pick a fresh random key for this attempt
+        selected_key = random.choice(api_keys)
+        client = Groq(api_key=selected_key)
         try:
             response = client.chat.completions.create(
                 model=model,
@@ -61,9 +61,9 @@ def call_agent(api_keys: list, agent_name: str, system_prompt: str, chat_history
         except Exception as e:
             error_msg = str(e).lower()
             if "429" in error_msg or "rate limit" in error_msg:
-                # Exponential backoff: 20s, 40s, 60s
-                wait_time = 20 * (attempt + 1)
-                st.warning(f"⚠️ API Limit Reached! {agent_name} is taking a {wait_time}s coffee break... ☕ (Auto-resuming shortly)")
+                # First wait is 2 minutes, then doubles each retry: 120s, 240s, 480s
+                wait_time = 120 * (2 ** attempt)
+                st.warning(f"⚠️ API Limit Reached! {agent_name} is taking a {wait_time}s coffee break... ☕ (Auto-resuming shortly, switching key)")
                 time.sleep(wait_time)
             else:
                 st.error(f"❌ {agent_name} encountered an error: {e}")
