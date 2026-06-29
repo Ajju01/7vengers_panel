@@ -30,7 +30,7 @@ def clear_state():
         os.remove(STATE_FILE)
 
 # --- Updated Groq API Engine with Key Rotation ---
-def call_agent(api_keys: list, agent_name: str, system_prompt: str, chat_history: list, model="llama3-70b-8192"):
+def call_agent(api_keys: list, agent_name: str, system_prompt: str, chat_history: list, model=llama-3.3-70b-versatile"):
     """
     Calls Groq API using a randomly selected API key to prevent rate limits.
     Picks a fresh random key on every retry too, so a rate-limited key isn't reused mid-wait.
