@@ -130,7 +130,7 @@ if st.session_state.is_running:
     if next_agent == "END":
         st.session_state.is_running = False
         st.success("✅ The 7vengers have finalized the master blueprint!")
-    elif len(st.session_state.chat_history) > 20 and not getattr(st.session_state, 'forced_final', False):
+    elif len(st.session_state.chat_history) > 60 and not getattr(st.session_state, 'forced_final', False):
         # Hit the safety cutoff before a real FINAL blueprint was produced.
         # Force one last Mastermind call to wrap things up instead of stopping silently.
         st.session_state.forced_final = True
