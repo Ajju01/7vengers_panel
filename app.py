@@ -1,7 +1,7 @@
 import streamlit as st
 from groq import Groq
 from agents import AGENTS
-from utils import load_state, save_state, clear_state, call_agent, web_search
+from utils import load_state, save_state, clear_state, call_agent, web_search, summarize_history
 
 # --- UI Setup ---
 st.set_page_config(page_title="7vengers War Room", page_icon="⚡", layout="wide")
@@ -24,6 +24,9 @@ if "chat_history" not in st.session_state:
 if "is_running" not in st.session_state:
     st.session_state.is_running = False
 
+if "discussion_summary" not in st.session_state:
+    st.session_state.discussion_summary = None
+
 # --- Sidebar Controls ---
 with st.sidebar:
     st.header("Control Panel")
@@ -36,6 +39,7 @@ with st.sidebar:
             st.session_state.chat_history = []
             st.session_state.is_final_round = False  # reset so a stale flag from a previous mission can't leak in
             st.session_state.forced_final = False
+            st.session_state.discussion_summary = None
             # Add user prompt to history
             st.session_state.chat_history.append({"agent": "User", "content": topic_input})
             save_state(st.session_state.chat_history)
@@ -47,6 +51,7 @@ with st.sidebar:
         st.session_state.is_running = False
         st.session_state.is_final_round = False
         st.session_state.forced_final = False
+        st.session_state.discussion_summary = None
         clear_state()
         st.session_state.chat_history = []
         st.rerun()
@@ -143,7 +148,8 @@ if st.session_state.is_running:
                 api_keys=api_keys_list,
                 agent_name="The Mastermind",
                 system_prompt=system_prompt,
-                chat_history=st.session_state.chat_history
+                chat_history=st.session_state.chat_history,
+                summary=st.session_state.discussion_summary
             )
 
             if response:
@@ -170,10 +176,19 @@ if st.session_state.is_running:
                 api_keys=api_keys_list,
                 agent_name=next_agent,
                 system_prompt=system_prompt,
-                chat_history=st.session_state.chat_history
+                chat_history=st.session_state.chat_history,
+                summary=st.session_state.discussion_summary
             )
             
             if response:
                 st.session_state.chat_history.append({"agent": next_agent, "content": response})
                 save_state(st.session_state.chat_history)
+
+                # 📝 Refresh the rolling summary once the discussion gets long enough,
+                # so future agent calls stay light on tokens without losing context.
+                if len(st.session_state.chat_history) >= 6:
+                    new_summary = summarize_history(api_keys_list, st.session_state.chat_history)
+                    if new_summary:
+                        st.session_state.discussion_summary = new_summary
+
                 st.rerun() # Trigger the next step in the loop
